@@ -15,10 +15,10 @@ function Navbar() {
   const handleDashboardClick = () => {
     if (isAuthenticated) {
       // ✅ User is authenticated, go to dashboard (external app)
-      window.location.href = "http://localhost:3001/";
+      window.location.href = "https://zerodha-dashboard-12h4.onrender.com/";
     } else {
       // 🔒 Not logged in, store intended URL and redirect to login
-      localStorage.setItem("redirectAfterLogin", "http://localhost:3001/");
+      localStorage.setItem("redirectAfterLogin", "https://zerodha-dashboard-12h4.onrender.com/");
       navigate("/login");
     }
   };
