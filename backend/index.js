@@ -18,9 +18,6 @@ const PORT = process.env.PORT || 3002;
 const uri = process.env.MONGO_URL;
 
 const app = express();
-
-// Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -33,6 +30,21 @@ app.use(
     credentials: true,
   })
 );
+app.options("*", cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
+
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.use(bodyParser.json());
 app.use(express.json());
 
