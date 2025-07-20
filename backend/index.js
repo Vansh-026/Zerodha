@@ -1,4 +1,6 @@
 require("dotenv").config();
+const path = require('../frontend');
+
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -40,7 +42,11 @@ app.use(express.json())
 
 
 
+app.use(express.static(path.join(__dirname, '../frontend/build')));
 
+app.get('*', (req, res) => {
+res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+});
 
 app.get("/allHoldings", async (req, res) => {
   let allHoldings = await HoldingsModel.find({});
