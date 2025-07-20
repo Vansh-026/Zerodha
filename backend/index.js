@@ -7,130 +7,133 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
 const { HoldingsModel } = require("./models/HoldingsModel");
-
 const { PositionsModel } = require("./models/PositionsModel");
 const { OrdersModel } = require("./models/OrdersModel");
 const { UserModel } = require("./models/UserModel");
 
+const AuthRoute = require("./AuthRoute");
 
-const AuthRoute=require("./AuthRoute");
-
-const allowedOrigins = ["http://localhost:3000","http://localhost:3001"];
-
+const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 const PORT = process.env.PORT || 3002;
 const uri = process.env.MONGO_URL;
 
-
-
 const app = express();
+
+// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors({
-  origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
-app.use(express.json())
+app.use(express.json());
 
+// API Endpoints
 
-
-
-
+// Get all holdings
 app.get("/allHoldings", async (req, res) => {
-  let allHoldings = await HoldingsModel.find({});
+  const allHoldings = await HoldingsModel.find({});
   res.json(allHoldings);
 });
 
+// Get all positions
 app.get("/allPositions", async (req, res) => {
-  let allPositions = await PositionsModel.find({});
+  const allPositions = await PositionsModel.find({});
   res.json(allPositions);
 });
 
- app.post("/newOrder", async (req, res) => {
-    const { name, qty, price, mode } = req.body;
+// Create new order (BUY / SELL)
+app.post("/newOrder", async (req, res) => {
+  const  name = req.body.name;
+  const mode = req.body.mode?.toUpperCase(); 
 
-    try {
-      // 1. Save or update order
-      await OrdersModel.findOneAndUpdate(
-        { name, mode },
-        {
-          $inc: { qty: qty },
-          $set: { price: price },
-        },
-        { upsert: true, new: true }
-      );
+  const qty = Number(req.body.qty);
+  const price = Number(req.body.price);
 
-      // 2. Get existing holding
-      const existing = await HoldingsModel.findOne({ name });
+  try {
+    // Save order in OrdersModel
+    await OrdersModel.findOneAndUpdate(
+      { name, mode },
+      {
+        $inc: { qty: qty },
+        $set: { price: price },
+      },
+      { upsert: true, new: true }
+    );
 
-      if (mode === "BUY") {
-        if (existing) {
-          // update avg price and qty
-          const totalQty = existing.qty + qty;
-          const newAvg = (existing.qty * existing.avg + qty * price) / totalQty;
+    // Get existing holding
+    const existing = await HoldingsModel.findOne({ name });
 
-          existing.qty = totalQty;
-          existing.avg = newAvg;
-          existing.price = price; // latest price
-          await existing.save();
-        } else {
-          // create new holding
-          await HoldingsModel.create({
-            name,
-            qty,
-            avg: price,
-            price,
-            net: "+0%",
-            day: "+0%",
-          });
-        }
+    if (mode === "BUY") {
+      if (existing) {
+        const totalQty = existing.qty + qty;
+        const newAvg =
+          (existing.qty * existing.avg + qty * price) / totalQty;
+
+        existing.qty = totalQty;
+        existing.avg = newAvg;
+        existing.price = price;
+        await existing.save();
+      } else {
+        await HoldingsModel.create({
+          name,
+          qty,
+          avg: price,
+          price,
+          net: "+0%",
+          day: "+0%",
+        });
       }
-
-      if (mode === "SELL") {
-        if (!existing || existing.qty < qty) {
-          return res.status(400).send("Not enough stock to sell");
-        }
-
-        existing.qty -= qty;
-
-        if (existing.qty === 0) {
-          await HoldingsModel.deleteOne({ name });
-        } else {
-          await existing.save();
-        }
-      }
-
-      res.send("Order and Holdings updated successfully!");
-    } catch (err) {
-      console.error("Order update error:", err);
-      res.status(500).send("Server error");
     }
-  });
+    console.log("Incoming order:", { name, mode, qty, price });
 
-  app.get('/allOrders', async (req, res) => {
-    let allOrders = await OrdersModel.find({});
-    res.send(allOrders);
-  });
+    if (mode === "SELL") {
+      if (!existing || existing.qty < qty) {
+        return res.status(400).send("Not enough stock to sell");
+      }
 
-  // user signup signin route
-  app.use("/", AuthRoute);
-  app.get("/logout", (req, res) => {
-  res.clearCookie("token"); // or whatever your cookie name is
+      existing.qty -= qty;
+      existing.price = price; // update to latest sell price
+
+      if (existing.qty === 0) {
+        await HoldingsModel.deleteOne({ name });
+      } else {
+        await existing.save();
+      }
+    }
+
+    res.send("Order and Holdings updated successfully!");
+  } catch (err) {
+    console.error("Order update error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+// Get all orders
+app.get("/allOrders", async (req, res) => {
+  const allOrders = await OrdersModel.find({});
+  res.send(allOrders);
+});
+
+// User auth routes
+app.use("/", AuthRoute);
+
+// Logout
+app.get("/logout", (req, res) => {
+  res.clearCookie("token");
   return res.status(200).json({ success: true, message: "Logout successful" });
 });
 
-
-
-
-
+// Start server
 app.listen(PORT, () => {
   console.log("App started!");
-  mongoose.connect(uri);
-  console.log("DB started!");
+  mongoose.connect(uri).then(() => console.log("DB connected!"));
 });

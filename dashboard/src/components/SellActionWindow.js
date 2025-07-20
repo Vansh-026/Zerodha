@@ -1,28 +1,31 @@
 import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
-
 import axios from "axios";
-
 import GeneralContext from "./GeneralContext";
-
 import "./BuyActionWindow.css";
 
 const SellActionWindow = ({ uid }) => {
   const [stockQuantity, setStockQuantity] = useState(1);
   const [stockPrice, setStockPrice] = useState(0.0);
 
-  const { closeSellWindow } = useContext(GeneralContext); // can rename later
+  const { closeSellWindow } = useContext(GeneralContext);
 
-  const handleSellClick = () => {
-    axios.post("http://localhost:3000/newOrder", {
-      name: uid,
-      qty: stockQuantity,
-      price: stockPrice,
-      mode: "SELL",
-    });
+  const handleSellClick = async () => {
+    try {
+      await axios.post("http://localhost:3002/newOrder", {
+        name: uid,
+        qty: Number(stockQuantity),
+        price: Number(stockPrice),
+        mode: "SELL",
+      });
 
-    closeSellWindow();
-    window.location.reload();
+      alert("Sell order placed successfully");
+      closeSellWindow();
+      window.location.reload();
+    } catch (error) {
+      alert("Failed to place sell order");
+      console.error("Sell error:", error);
+    }
   };
 
   const handleCancelClick = () => {
@@ -39,6 +42,7 @@ const SellActionWindow = ({ uid }) => {
               type="number"
               name="qty"
               id="qty"
+              min="1"
               onChange={(e) => setStockQuantity(e.target.value)}
               value={stockQuantity}
             />
@@ -49,6 +53,7 @@ const SellActionWindow = ({ uid }) => {
               type="number"
               name="price"
               id="price"
+              min="0"
               step="0.05"
               onChange={(e) => setStockPrice(e.target.value)}
               value={stockPrice}
@@ -58,7 +63,9 @@ const SellActionWindow = ({ uid }) => {
       </div>
 
       <div className="buttons">
-        <span>Margin required ₹140.65</span>
+        <span>
+          Expected return ₹{(Number(stockQuantity) * Number(stockPrice)).toFixed(2)}
+        </span>
         <div>
           <Link className="btn btn-red" onClick={handleSellClick}>
             Sell

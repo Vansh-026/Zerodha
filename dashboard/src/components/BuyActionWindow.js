@@ -1,25 +1,29 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-
 import axios from "axios";
-
 import GeneralContext from "./GeneralContext";
-
 import "./BuyActionWindow.css";
 
 const BuyActionWindow = ({ uid }) => {
   const [stockQuantity, setStockQuantity] = useState(1);
   const [stockPrice, setStockPrice] = useState(0.0);
 
-  const handleBuyClick = () => {
-    axios.post("http://localhost:3002/newOrder", {
-      name: uid,
-      qty: stockQuantity,
-      price: stockPrice,
-      mode: "BUY",
-    });
+  const handleBuyClick = async () => {
+    try {
+      // Send order to backend with correct number types
+      await axios.post("http://localhost:3002/newOrder", {
+        name: uid,
+        qty: Number(stockQuantity),
+        price: Number(stockPrice),
+        mode: "BUY",
+      });
 
-    GeneralContext.closeBuyWindow();
+      alert("Buy order placed successfully!");
+      GeneralContext.closeBuyWindow();
+    } catch (error) {
+      alert("Failed to place buy order");
+      console.error("Buy order error:", error);
+    }
   };
 
   const handleCancelClick = () => {
@@ -36,6 +40,7 @@ const BuyActionWindow = ({ uid }) => {
               type="number"
               name="qty"
               id="qty"
+              min="1"
               onChange={(e) => setStockQuantity(e.target.value)}
               value={stockQuantity}
             />
@@ -47,6 +52,7 @@ const BuyActionWindow = ({ uid }) => {
               name="price"
               id="price"
               step="0.05"
+              min="0"
               onChange={(e) => setStockPrice(e.target.value)}
               value={stockPrice}
             />
@@ -55,7 +61,7 @@ const BuyActionWindow = ({ uid }) => {
       </div>
 
       <div className="buttons">
-        <span>Margin required ₹140.65</span>
+        <span>Margin required ₹{(Number(stockQuantity) * Number(stockPrice)).toFixed(2)}</span>
         <div>
           <Link className="btn btn-blue" onClick={handleBuyClick}>
             Buy
