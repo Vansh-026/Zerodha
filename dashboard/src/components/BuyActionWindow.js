@@ -11,7 +11,7 @@ const BuyActionWindow = ({ uid }) => {
   const handleBuyClick = async () => {
     try {
       // Send order to backend with correct number types
-      await axios.post("https://zerodha-backend-aylf.onrender.com/newOrder", {
+      await axios.post("https://zerodha-backend-8yu9.onrender.com/newOrder", {
         name: uid,
         qty: Number(stockQuantity),
         price: Number(stockPrice),
