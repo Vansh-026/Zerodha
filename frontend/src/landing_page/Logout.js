@@ -10,7 +10,7 @@ const Home = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get("https://zerodha-backend-8yu9.onrender.com", {
+      await axios.get("https://zerodha-backend-l66r.onrender.com/logout", {
         withCredentials: true,
       });
       toast.success("Logout successful");
