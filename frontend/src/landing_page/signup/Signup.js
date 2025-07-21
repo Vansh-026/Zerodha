@@ -50,7 +50,7 @@ const Signup = () => {
 
     try {
       const { data } = await axios.post(
-        "https://zerodha-backend-l66r.onrender.com/signup",
+        "https://zerodha-backend-1klu.onrender.com/signup",
         inputValue,
         { withCredentials: true }
       );
