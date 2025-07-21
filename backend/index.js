@@ -13,7 +13,7 @@ const { UserModel } = require("./models/UserModel");
 
 const AuthRoute = require("./AuthRoute");
 
-const allowedOrigins = ["https://zerodha-frontend-cfr1.onrender.com", "https://zerodha-dashboard-medz.onrender.com"];
+const allowedOrigins = ["https://zerodha-frontend-1e08.onrender.com", "https://zerodha-dashboard-sj2g.onrender.com"];
 const PORT = process.env.PORT || 3002;
 const uri = process.env.MONGO_URL;
 
