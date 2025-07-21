@@ -18,18 +18,19 @@ const PORT = process.env.PORT || 3002;
 const uri = process.env.MONGO_URL;
 
 const app = express();
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 
 // Middleware
@@ -39,6 +40,9 @@ app.use(bodyParser.json());
 app.use(express.json());
 
 // API Endpoints
+app.get("/", (req, res) => {
+  res.send("Backend is running ✅");
+});
 
 // Get all holdings
 app.get("/allHoldings", async (req, res) => {
