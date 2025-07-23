@@ -1,7 +1,13 @@
 import React from "react";
 
 function Universe() {
+      const navigate = useNavigate();
+
+    const handleSignupClick = () => {
+        navigate("/signup"); // client-side routing
+    };
   return (
+    
     <div className="container mt-5">
       <div className="row text-center">
         <h1>The Zerodha Universe</h1>
@@ -39,7 +45,7 @@ function Universe() {
           <img src="media/images/dittoLogo.png" style={{width:"30%"}}/>
           <p className="text-small text-muted">Insurance</p>
         </div>
-        <button className='p-2 btn btn-primary fs-5 mb-5' style={{width:"20%", margin:"0 auto"}}>Signup Now</button>
+        <button className='p-2 btn btn-primary fs-5 mb-5' style={{width:"20%", margin:"0 auto"}} onClick={handleSignupClick}>Signup Now</button>
       </div>
     </div>
   );
