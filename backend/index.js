@@ -6,14 +6,19 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
+
 const { HoldingsModel } = require("./models/HoldingsModel");
 const { PositionsModel } = require("./models/PositionsModel");
 const { OrdersModel } = require("./models/OrdersModel");
 const { UserModel } = require("./models/UserModel");
 
 const AuthRoute = require("./AuthRoute");
+const { handleChat } = require("./chatbot");
 
-const allowedOrigins = ["https://zerodha-frontend-1e08.onrender.com", "https://zerodha-dashboard-sj2g.onrender.com"];
+const allowedOrigins = [
+  "https://zerodha-frontend-1e08.onrender.com",
+  "https://zerodha-dashboard-sj2g.onrender.com",
+];
 const PORT = process.env.PORT || 3002;
 const uri = process.env.MONGO_URL;
 
@@ -21,7 +26,12 @@ const app = express();
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.startsWith("http://localhost:") ||
+        origin.startsWith("http://127.0.0.1:")
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -31,12 +41,26 @@ app.use(
   })
 );
 
-
 // Middleware
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use(bodyParser.json());
 app.use(express.json());
+
+// Chatbot endpoint
+app.post("/chat", async (req, res) => {
+  try {
+    const { message, history } = req.body;
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "Message is required" });
+    }
+    const reply = await handleChat(message, history || []);
+    res.json({ reply });
+  } catch (err) {
+    console.error("Chat error:", err);
+    res.status(500).json({ error: "Failed to generate reply" });
+  }
+});
 
 // API Endpoints
 
@@ -54,8 +78,8 @@ app.get("/allPositions", async (req, res) => {
 
 // Create new order (BUY / SELL)
 app.post("/newOrder", async (req, res) => {
-  const  name = req.body.name;
-  const mode = req.body.mode?.toUpperCase(); 
+  const name = req.body.name;
+  const mode = req.body.mode?.toUpperCase();
 
   const qty = Number(req.body.qty);
   const price = Number(req.body.price);
@@ -136,6 +160,9 @@ app.get("/logout", (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log("App started!");
-  mongoose.connect(uri).then(() => console.log("DB connected!"));
+  console.log(`App started on port ${PORT}!`);
+  mongoose
+    .connect(uri)
+    .then(() => console.log("DB connected!"))
+    .catch((err) => console.error("DB connection error:", err));
 });

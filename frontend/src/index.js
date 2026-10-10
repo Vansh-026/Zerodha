@@ -16,6 +16,7 @@ import Footer from "./landing_page/Footer";
 import NotFound from "./landing_page/NotFound";
 import Logout from "./landing_page/Logout";
 import { AuthProvider } from "./landing_page/AuthContext"; // ✅ Import it here
+import Chatbot from "./landing_page/chatbot/Chatbot";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
@@ -42,6 +43,7 @@ root.render(
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
+      <Chatbot />
     </AuthProvider>
   </BrowserRouter>
 );
